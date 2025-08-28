@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Popup Labyrinth</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #0f0;
+      text-align: center;
+      padding-top: 100px;
+    }
+    button {
+      font-size: 1.5rem;
+      padding: 10px 20px;
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔓 Unlock the Secrets (if you dare)</h1>
+  <button id="startBtn">Summon the Chaos</button>
+
+  <script>
+    let popups = [];
+    let popupTimers = [];
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function summonPopup(index) {
+      const screenWidth = window.screen.availWidth;
+      const screenHeight = window.screen.availHeight;
+
+      let x = randomInt(0, screenWidth - 300);
+      let y = randomInt(0, screenHeight - 300);
+
+      const popup = window.open('', '', `width=300,height=200,left=${x},top=${y}`);
+      if (!popup) return;
+
+      popup.document.body.style.background = '#222';
+      popup.document.body.style.color = '#f00';
+      popup.document.title = "Escape Me?";
+      popup.document.body.innerHTML = `<h2>You can't close me #${index}</h2>`;
+
+      // Attempt to reopen itself if closed
+      const closeTrap = setInterval(() => {
+        try {
+          if (popup.closed) {
+            clearInterval(closeTrap);
+            summonPopup(index + 1000); // resurrection with higher index
+          }
+        } catch (e) {
+          clearInterval(closeTrap);
+        }
+      }, 2000);
+
+      popup.onbeforeunload = () => {
+        popup.document.body.innerHTML = "<h3>Too late...</h3>";
+      };
+
+      popups.push(popup);
+      popupTimers.push(closeTrap);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      for (let i = 0; i < 5; i++) {
+        summonPopup(i);
+      }
+
+      // Escalate over time
+      let escalation = setInterval(() => {
+        for (let i = 0; i < 3; i++) {
+          summonPopup(popups.length + i);
+        }
+
+        if (popups.length > 50) {
+          clearInterval(escalation);
+          document.getElementById('escapeBtn').disabled = false;
+        }
+      }, 3000);
+
+      document.getElementById('startBtn').disabled = true;
+    });
+
+    document.getElementById('escapeBtn').addEventListener('click', () => {
+      let success = Math.random() < 0.15;
+      if (success) {
+        alert('You escaped... for now.');
+        popups.forEach(p => { if (!p.closed) p.close(); });
+        popupTimers.forEach(t => clearInterval(t));
+      } else {
+        alert('Failed escape... doubling down!');
+        for (let i = 0; i < 10; i++) {
+          summonPopup(popups.length + i);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
